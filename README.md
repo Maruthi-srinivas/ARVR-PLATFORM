@@ -90,5 +90,8 @@ three/examples/jsm/loaders/RGBELoader
 
 npm install three @react-three/fiber @react-three/drei @react-three/postprocessing three/examples/jsm RGBELoader
 
+npm install
+
+npm start
 
 
