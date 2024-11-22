@@ -192,31 +192,40 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
 
 
 export default function App() {
+  // State to hold material properties for the model
   const [materialProps, setMaterialProps] = useState({
-    color: '#ffffff',
-    roughness: 0.5,
-    metalness: 0.5,
-    specular: '#ffffff', // Specular property
-    emissive: '#000000', // Emissive property
-    opacity: 1.0, // Opacity property
-    clearcoat: 0.0, // Clearcoat property
+    color: '#ffffff', // Base color of the material
+    roughness: 0.5, // Roughness level of the material
+    metalness: 0.5, // Metalness of the material
+    specular: '#ffffff', // Specular (reflection)property
+    emissive: '#000000', // Emissive (glowing) property
+    opacity: 1.0, // Opacity (transparency)property
+    clearcoat: 0.0, // Clearcoat (polished surface) property
     clearcoatRoughness: 0.0, // Clearcoat Roughness property
   });
+   // State to manage lighting properties
   const [lightProps, setLightProps] = useState({
-    color: '#ffffff',
-    intensity: 1,
-    position: { x: 10, y: 10, z: 10 },
+    color: '#ffffff', // Color of the light
+    intensity: 1, // Intensity of the light
+    position: { x: 10, y: 10, z: 10 }, // Position of the light in 3D space
   });
+  // State to toggle postprocessing bloom effect
   const [enableBloom, setEnableBloom] = useState(true);
+   // State to manage uploaded GLB model
   const [glbModel, setGlbModel] = useState(null);
+  // State to manage uploaded texture for the model
   const [texture, setTexture] = useState(null);
+  // State to manage the undostack
   const [undoStack, setUndoStack] = useState([]);
+  // State to manage environment HDRI texture
   const [environment, setEnvironment] = useState(null);
+  // State to manage the redostack
   const [redoStack, setRedoStack] = useState([]);
-  const [exposure, setExposure] = useState(1);
-  const [environmentIntensity, setEnvironmentIntensity] = useState(1);
-  const [environmentRotation, setEnvironmentRotation] = useState(0);
-  const [hdriBlur, setHdriBlur] = useState(0.0);
+  // State to control various environment settings
+  const [exposure, setExposure] = useState(1); // Tone mapping exposure
+  const [environmentIntensity, setEnvironmentIntensity] = useState(1);  // Environment light intensity
+  const [environmentRotation, setEnvironmentRotation] = useState(0); // Rotation of the HDRI environment
+  const [hdriBlur, setHdriBlur] = useState(0.0); // Blur effect on HDRI background
   const [fbxModelUrl, setFbxModelUrl] = useState(null);
   const [startAnimation, setStartAnimation] = useState(false);
 
@@ -238,7 +247,7 @@ export default function App() {
     setUndoStack(newStack);
     setRedoStack([]);
   };
-
+// Undo operation functionality
   const undo = () => {
     if (undoStack.length) {
       const previousState = undoStack.pop();
@@ -272,7 +281,7 @@ export default function App() {
     }
   };
   
-
+// Redo functionality
   const redo = () => {
     if (redoStack.length) {
       const nextState = redoStack.pop();
@@ -330,7 +339,7 @@ export default function App() {
     setEnvironmentRotation(newState.rotation || environmentRotation);
     saveToUndoStack();
   };
-  
+  // Function to handle uploading GLB model files
   const handleGLBUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -340,7 +349,7 @@ export default function App() {
       saveToUndoStack();
     }
   };
-  
+  // Function to handle uploading FBX model files
   const handleFBXUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -350,7 +359,7 @@ export default function App() {
       saveToUndoStack();
     }
   };
-  
+  // Function to handle uploading Textures files
   const handleTextureUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -362,6 +371,7 @@ export default function App() {
       });
     }
   };
+  // Function to handle uploading HDRI files
   const handleHdriUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -383,8 +393,10 @@ export default function App() {
           intensity={lightProps.intensity}
           position={[lightProps.position.x, lightProps.position.y, lightProps.position.z]}
         />
+            {/* Render the uploaded model if available */}
         <Model materialProps={materialProps} glbModel={glbModel} fbxModelUrl={fbxModelUrl} texture={texture} startAnimation={startAnimation} />
-        {environment && (
+        {/* Environment map (HDRI) */}
+          {environment && (
           <Environment
             background
             map={environment}
@@ -393,16 +405,19 @@ export default function App() {
             rotation={[0, environmentRotation, 0]}
           />
         )}
+        {/* Postprocessing effects */}
         {enableBloom && (
           <EffectComposer>
             <Bloom luminanceThreshold={0.9} luminanceSmoothing={0.4} intensity={1.5} />
             <Vignette eskil={false} offset={0.1} darkness={1.1} />
           </EffectComposer>
         )}
+        {/* Orbit controls for camera manipulation */}
         <OrbitControls />
       </Canvas>
-
+      {/* Panel for UI controls */}
       <div className="controls-panel">
+        {/* Material Properties controls */}
   <h3>Material Settings</h3>
   <label>
     Color:
