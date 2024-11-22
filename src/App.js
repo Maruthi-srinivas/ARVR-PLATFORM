@@ -226,10 +226,12 @@ export default function App() {
   const [environmentIntensity, setEnvironmentIntensity] = useState(1);  // Environment light intensity
   const [environmentRotation, setEnvironmentRotation] = useState(0); // Rotation of the HDRI environment
   const [hdriBlur, setHdriBlur] = useState(0.0); // Blur effect on HDRI background
+  // State to manage uploaded GLB model
   const [fbxModelUrl, setFbxModelUrl] = useState(null);
+  // State to manage Animation
   const [startAnimation, setStartAnimation] = useState(false);
 
-  
+  // Functionality to save which properties into undostack
   const saveToUndoStack = () => {
     const currentState = {
       materialProps,
@@ -243,7 +245,7 @@ export default function App() {
       enableBloom,
     };
     const newStack = [...undoStack, currentState];
-    if (newStack.length > 10) newStack.shift();
+    if (newStack.length > 10) newStack.shift();  //dynamically changes the stack length
     setUndoStack(newStack);
     setRedoStack([]);
   };
@@ -316,6 +318,7 @@ export default function App() {
   };
   
   // Handlers that update state and save to undo stack
+  // Material Properties Handler
   const handleMaterialChange = (newProps) => {
     setMaterialProps((prevProps) => {
       const updatedProps = { ...prevProps, ...newProps };
@@ -324,7 +327,7 @@ export default function App() {
     });
   };
   
-
+  // Light properties Hnadler
   const handleLightChange = (newProps) => {
     setLightProps((prevProps) => {
       const updatedProps = { ...prevProps, ...newProps };
