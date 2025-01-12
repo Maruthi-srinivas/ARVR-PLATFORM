@@ -146,12 +146,12 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
               }
 
               // Update other material properties
-              child.material.color = new THREE.Color(materialProps.color);
-              child.material.roughness = materialProps.roughness;
-              child.material.metalness = materialProps.metalness;
-              child.material.emissive = new THREE.Color(materialProps.emissive);
-              child.material.opacity = materialProps.opacity;
-              child.material.transparent = materialProps.opacity < 1;
+              child.material.color = new THREE.Color(materialProps.color);  //color properties
+              child.material.roughness = materialProps.roughness;    //Roughness properties
+              child.material.metalness = materialProps.metalness;     //Metalness properties
+              child.material.emissive = new THREE.Color(materialProps.emissive);  //Emissive properties
+              child.material.opacity = materialProps.opacity;           //opacity properties
+              child.material.transparent = materialProps.opacity < 1; 
               child.material.clearcoat = materialProps.clearcoat;
               child.material.clearcoatRoughness = materialProps.clearcoatRoughness;
               child.material.needsUpdate = true;
@@ -421,7 +421,7 @@ export default function App() {
       {/* Panel for UI controls */}
       <div className="controls-panel">
         {/* Material Properties controls */}
-  <h3>Material Settings</h3>
+  <h3>Material Settings</h3>        
   <label>
     Color:
     <input
@@ -555,6 +555,7 @@ export default function App() {
             onChange={(e) => handleLightChange({ position: { ...lightProps.position, z: parseFloat(e.target.value) } })}
           />
         </label>
+              {/* HDRI Environment properties calling controls */}
   <h3> HDRI Environment Settings</h3>
   <label>
     Environment Intensity:
@@ -612,6 +613,7 @@ export default function App() {
       }}
     />
   </label>
+        {/* All types of file uploading controls */}
         <h3>Upload Model</h3>
         <label>GLB:</label>
         <input type="file" accept=".glb" onChange={handleGLBUpload} />
