@@ -89,7 +89,7 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
            // Check if material is an array
           if (Array.isArray(child.material)) {
             child.material.forEach((mat) => {
-              mat.map = null; // Remove the texture
+              mat.map = texture; // Remove the texture
               mat.needsUpdate = true; // Trigger material update
             });
           } else {
