@@ -40,6 +40,8 @@ import { Canvas, useThree,useFrame } from '@react-three/fiber'; // Core 3D rende
 import { useState, useEffect,useRef } from 'react'; // React hooks for state and lifecycle management
 import { OrbitControls,Environment} from '@react-three/drei';  // Predefined 3D utilities
 import { EffectComposer, Bloom,Vignette} from '@react-three/postprocessing'; // Post-processing effects
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { useLoader } from '@react-three/fiber';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';  // Loader for HDR textures
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'; // Loader for FBX models
 import * as THREE from 'three'; // Core library for 3D rendering
@@ -51,6 +53,7 @@ import { useGLTF } from '@react-three/drei'; // Hook to load GLTF/GLB models
 function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }) {
   const [modelScene, setModelScene] = useState(null); // State to store the model's scene
   const [mixer, setMixer] = useState(null);  // State to manage animations
+  const [texture,setTexture]=useState(null); // Texture Mangement
   const modelRef = useRef();  // Reference to the model for manipulation
 
   // Always call useGLTF, but pass a dummy URL if glbModel is not provided
@@ -79,59 +82,48 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
   // Effect to process GLB models when they change
   useEffect(() => {
     if (glbModel && gltfData) {
-      const { scene, animations } = gltfData; // Extract scene and animations from model data
-
-      // Traverse through model and update material properties
-
-      // Add textures from the model
+      const { scene, animations } = gltfData;
+  
+      // Apply materials and textures
       scene.traverse((child) => {
-        if (child.isMesh && child.material) {
-           // Check if material is an array
-          if (Array.isArray(child.material)) {
-            child.material.forEach((mat) => {
-              // Apply the texture
-              if(texture){
-                mat.map=texture;
-              }
-              mat.needsUpdate = true; // Trigger material update
-            });
+        if (child.isMesh) {
+          // Preserve existing texture if no user texture is provided
+          if (!texture) {
+            if (child.material.map) {
+              child.material.map.needsUpdate = true;
+            }
           } else {
-            if(texture){
-                child.material.map = texture; // Apply custom texture if provided
-            }
-            else{
-              // Ensure the original texture is used if available
-                if (child.material.map) {
-                    child.material.map.needsUpdate = true;
-                }
-            }
-            child.material.needsUpdate = true; // Mark material for update
+            // Apply user-provided texture
+            child.material.map = texture;
+            child.material.map.needsUpdate = true;
           }
-          // Update material properties from input
+  
+          // Update other material properties
           child.material.color = new THREE.Color(materialProps.color);
-              child.material.roughness = materialProps.roughness;
-              child.material.metalness = materialProps.metalness;
-              child.material.emissive = new THREE.Color(materialProps.emissive);
-              child.material.opacity = materialProps.opacity;
-              child.material.transparent = materialProps.opacity < 1;
-              child.material.clearcoat = materialProps.clearcoat;
-              child.material.clearcoatRoughness = materialProps.clearcoatRoughness;
-              child.material.needsUpdate = true;
+          child.material.roughness = materialProps.roughness;
+          child.material.metalness = materialProps.metalness;
+          child.material.emissive = new THREE.Color(materialProps.emissive);
+          child.material.opacity = materialProps.opacity;
+          child.material.transparent = materialProps.opacity < 1;
+          child.material.clearcoat = materialProps.clearcoat;
+          child.material.clearcoatRoughness = materialProps.clearcoatRoughness;
+          child.material.needsUpdate = true;
         }
       });
-
-      setModelScene(scene);  // Save the processed scene
-      // Setup animation mixer if animations exist
+  
+      setModelScene(scene);
+  
       if (animations.length > 0) {
         const animationMixer = new THREE.AnimationMixer(scene);
         animations.forEach((clip) => {
-          const action = animationMixer.clipAction(clip);  // Link animation clips to the mixer
-          action.play();  // Start playing animations
+          const action = animationMixer.clipAction(clip);
+          action.play();
         });
-        setMixer(animationMixer);  // Save the mixer instance
+        setMixer(animationMixer);
       }
     }
-  }, [glbModel,texture, materialProps,gltfData]);
+  }, [glbModel, materialProps, texture, gltfData]);
+
 
   // Effect to process FBX models when they change
   useEffect(() => {
