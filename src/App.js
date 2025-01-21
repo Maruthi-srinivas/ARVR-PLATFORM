@@ -26,35 +26,22 @@
 
 
 
+import { Canvas, useThree,useFrame } from '@react-three/fiber';
+import { useState, useEffect,useRef } from 'react';
+import { OrbitControls,Environment} from '@react-three/drei';
+import { EffectComposer, Bloom,Vignette} from '@react-three/postprocessing';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
+import * as THREE from 'three';
+import { useSpring, animated } from '@react-spring/three';  // <-- Import animation helpers
+import './App.css';
+import { useGLTF } from '@react-three/drei'; // Ensure this import is correct
 
 
-
-
-
-
-
-
-
-// Import necessary packages and modules
-import { Canvas, useThree,useFrame } from '@react-three/fiber'; // Core 3D rendering components for React
-import { useState, useEffect,useRef } from 'react'; // React hooks for state and lifecycle management
-import { OrbitControls,Environment} from '@react-three/drei';  // Predefined 3D utilities
-import { EffectComposer, Bloom,Vignette} from '@react-three/postprocessing'; // Post-processing effects
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { useLoader } from '@react-three/fiber';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader';  // Loader for HDR textures
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader'; // Loader for FBX models
-import * as THREE from 'three'; // Core library for 3D rendering
-import { useSpring, animated } from '@react-spring/three';  // <-- Import animation helpers  // Animation helpers for Three.js
-import './App.css';  // Custom styles for the application
-import { useGLTF } from '@react-three/drei'; // Hook to load GLTF/GLB models
-
-// Component to handle and display 3D models
-function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }) {
-  const [modelScene, setModelScene] = useState(null); // State to store the model's scene
-  const [mixer, setMixer] = useState(null);  // State to manage animations
-  const [texture,setTexture]=useState(null); // Texture Mangement
-  const modelRef = useRef();  // Reference to the model for manipulation
+function Model({ materialProps, glbModel, fbxModelUrl,texture, startAnimation }) {
+  const [modelScene, setModelScene] = useState(null);
+  const [mixer, setMixer] = useState(null);
+  const modelRef = useRef();
 
   // Always call useGLTF, but pass a dummy URL if glbModel is not provided
   const gltfData = useGLTF(glbModel || "/scene.gltf", true);
@@ -65,7 +52,6 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
     config: { duration: 5000 },
     reset: true,
   });
-    // Effect to clear the scene if no GLB model is provided
   useEffect(() => {
     if (!glbModel) {
       setModelScene(null); // Clear the model when GLB is null
@@ -78,8 +64,7 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
       setModelScene(null); // Clear the model when FBX is null
     }
   }, [fbxModelUrl]);
- 
-  // Effect to process GLB models when they change
+  // Process GLB model
   useEffect(() => {
     if (glbModel && gltfData) {
       const { scene, animations } = gltfData;
@@ -124,60 +109,59 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
     }
   }, [glbModel, materialProps, texture, gltfData]);
 
-
-  // Effect to process FBX models when they change
+  // Process FBX model
   useEffect(() => {
     if (fbxModelUrl) {
-      const loader = new FBXLoader();  // Create a new FBX loader
+      const loader = new FBXLoader();
       loader.load(
-        fbxModelUrl,  // URL of the FBX file
+        fbxModelUrl,
         (model) => {
-          console.log("FBX Model Loaded:", model); // Log successful load
+          console.log("FBX Model Loaded:", model);
 
-         // Traverse and apply materials/textures
+          // Apply materials and textures
           model.traverse((child) => {
             if (child.isMesh) {
               // Preserve existing texture if no user texture is provided
               if (!texture) {
                 if (child.material.map) {
-                  child.material.map.needsUpdate = true; // Ensure existing texture updates
+                  child.material.map.needsUpdate = true;
                 }
               } else {
                 // Apply user-provided texture
-                child.material.map = texture;  // Apply custom texture
+                child.material.map = texture;
                 child.material.map.needsUpdate = true;
               }
 
               // Update other material properties
-              child.material.color = new THREE.Color(materialProps.color);  //color properties
-              child.material.roughness = materialProps.roughness;    //Roughness properties
-              child.material.metalness = materialProps.metalness;     //Metalness properties
-              child.material.emissive = new THREE.Color(materialProps.emissive);  //Emissive properties
-              child.material.opacity = materialProps.opacity;           //opacity properties
-              child.material.transparent = materialProps.opacity < 1; 
+              child.material.color = new THREE.Color(materialProps.color);
+              child.material.roughness = materialProps.roughness;
+              child.material.metalness = materialProps.metalness;
+              child.material.emissive = new THREE.Color(materialProps.emissive);
+              child.material.opacity = materialProps.opacity;
+              child.material.transparent = materialProps.opacity < 1;
               child.material.clearcoat = materialProps.clearcoat;
               child.material.clearcoatRoughness = materialProps.clearcoatRoughness;
               child.material.needsUpdate = true;
             }
           });
 
-          setModelScene(model);  // Save the processed scene
+          setModelScene(model);
 
           // Initialize animation mixer if animations exist
           if (model.animations && model.animations.length > 0) {
             console.log("FBX Animations Found:", model.animations);
             const animationMixer = new THREE.AnimationMixer(model);
             model.animations.forEach((clip) => {
-              const action = animationMixer.clipAction(clip);  // Link animation clips to the mixer
-              action.play(); // Start playing animations
+              const action = animationMixer.clipAction(clip);
+              action.play();
             });
-            setMixer(animationMixer); // Save the mixer instance
+            setMixer(animationMixer);
           } else {
             console.warn("No animations found in FBX model.");
           }
         },
         undefined,
-        (error) => console.error("Error loading FBX:", error)  // Log load errors
+        (error) => console.error("Error loading FBX:", error)
       );
     }
   }, [fbxModelUrl, materialProps, texture]);
@@ -186,7 +170,7 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
   useFrame((state, delta) => {
     if (mixer) mixer.update(delta);
   });
-  // Render the model scene with animations
+
   return modelScene ? (
     <animated.primitive object={modelScene} ref={modelRef} {...props} />
   ) : null;
@@ -195,46 +179,35 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
 
 
 export default function App() {
-  // State to hold material properties for the model
   const [materialProps, setMaterialProps] = useState({
-    color: '#ffffff', // Base color of the material
-    roughness: 0.5, // Roughness level of the material
-    metalness: 0.5, // Metalness of the material
-    specular: '#ffffff', // Specular (reflection)property
-    emissive: '#000000', // Emissive (glowing) property
-    opacity: 1.0, // Opacity (transparency)property
-    clearcoat: 0.0, // Clearcoat (polished surface) property
+    color: '#ffffff',
+    roughness: 0.5,
+    metalness: 0.5,
+    specular: '#ffffff', // Specular property
+    emissive: '#000000', // Emissive property
+    opacity: 1.0, // Opacity property
+    clearcoat: 0.0, // Clearcoat property
     clearcoatRoughness: 0.0, // Clearcoat Roughness property
   });
-   // State to manage lighting properties
   const [lightProps, setLightProps] = useState({
-    color: '#ffffff', // Color of the light
-    intensity: 1, // Intensity of the light
-    position: { x: 10, y: 10, z: 10 }, // Position of the light in 3D space
+    color: '#ffffff',
+    intensity: 1,
+    position: { x: 10, y: 10, z: 10 },
   });
-  // State to toggle postprocessing bloom effect
   const [enableBloom, setEnableBloom] = useState(true);
-   // State to manage uploaded GLB model
   const [glbModel, setGlbModel] = useState(null);
-  // State to manage uploaded texture for the model
   const [texture, setTexture] = useState(null);
-  // State to manage the undostack
   const [undoStack, setUndoStack] = useState([]);
-  // State to manage environment HDRI texture
   const [environment, setEnvironment] = useState(null);
-  // State to manage the redostack
   const [redoStack, setRedoStack] = useState([]);
-  // State to control various environment settings
-  const [exposure, setExposure] = useState(1); // Tone mapping exposure
-  const [environmentIntensity, setEnvironmentIntensity] = useState(1);  // Environment light intensity
-  const [environmentRotation, setEnvironmentRotation] = useState(0); // Rotation of the HDRI environment
-  const [hdriBlur, setHdriBlur] = useState(0.0); // Blur effect on HDRI background
-  // State to manage uploaded GLB model
+  const [exposure, setExposure] = useState(1);
+  const [environmentIntensity, setEnvironmentIntensity] = useState(1);
+  const [environmentRotation, setEnvironmentRotation] = useState(0);
+  const [hdriBlur, setHdriBlur] = useState(0.0);
   const [fbxModelUrl, setFbxModelUrl] = useState(null);
-  // State to manage Animation
   const [startAnimation, setStartAnimation] = useState(false);
 
-  // Functionality to save which properties into undostack
+  
   const saveToUndoStack = () => {
     const currentState = {
       materialProps,
@@ -248,11 +221,11 @@ export default function App() {
       enableBloom,
     };
     const newStack = [...undoStack, currentState];
-    if (newStack.length > 10) newStack.shift();  //dynamically changes the stack length
+    if (newStack.length > 10) newStack.shift();
     setUndoStack(newStack);
     setRedoStack([]);
   };
-// Undo operation functionality
+
   const undo = () => {
     if (undoStack.length) {
       const previousState = undoStack.pop();
@@ -286,7 +259,7 @@ export default function App() {
     }
   };
   
-// Redo functionality
+
   const redo = () => {
     if (redoStack.length) {
       const nextState = redoStack.pop();
@@ -321,7 +294,6 @@ export default function App() {
   };
   
   // Handlers that update state and save to undo stack
-  // Material Properties Handler
   const handleMaterialChange = (newProps) => {
     setMaterialProps((prevProps) => {
       const updatedProps = { ...prevProps, ...newProps };
@@ -330,7 +302,7 @@ export default function App() {
     });
   };
   
-  // Light properties Hnadler
+
   const handleLightChange = (newProps) => {
     setLightProps((prevProps) => {
       const updatedProps = { ...prevProps, ...newProps };
@@ -345,7 +317,7 @@ export default function App() {
     setEnvironmentRotation(newState.rotation || environmentRotation);
     saveToUndoStack();
   };
-  // Function to handle uploading GLB model files
+  
   const handleGLBUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -355,7 +327,7 @@ export default function App() {
       saveToUndoStack();
     }
   };
-  // Function to handle uploading FBX model files
+  
   const handleFBXUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -365,7 +337,7 @@ export default function App() {
       saveToUndoStack();
     }
   };
-  // Function to handle uploading Textures files
+  
   const handleTextureUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -377,7 +349,6 @@ export default function App() {
       });
     }
   };
-  // Function to handle uploading HDRI files
   const handleHdriUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -399,10 +370,8 @@ export default function App() {
           intensity={lightProps.intensity}
           position={[lightProps.position.x, lightProps.position.y, lightProps.position.z]}
         />
-            {/* Render the uploaded model if available */}
         <Model materialProps={materialProps} glbModel={glbModel} fbxModelUrl={fbxModelUrl} texture={texture} startAnimation={startAnimation} />
-        {/* Environment map (HDRI) */}
-          {environment && (
+        {environment && (
           <Environment
             background
             map={environment}
@@ -411,20 +380,17 @@ export default function App() {
             rotation={[0, environmentRotation, 0]}
           />
         )}
-        {/* Postprocessing effects */}
         {enableBloom && (
           <EffectComposer>
             <Bloom luminanceThreshold={0.9} luminanceSmoothing={0.4} intensity={1.5} />
             <Vignette eskil={false} offset={0.1} darkness={1.1} />
           </EffectComposer>
         )}
-        {/* Orbit controls for camera manipulation */}
         <OrbitControls />
       </Canvas>
-      {/* Panel for UI controls */}
+
       <div className="controls-panel">
-        {/* Material Properties controls */}
-  <h3>Material Settings</h3>        
+  <h3>Material Settings</h3>
   <label>
     Color:
     <input
@@ -558,7 +524,6 @@ export default function App() {
             onChange={(e) => handleLightChange({ position: { ...lightProps.position, z: parseFloat(e.target.value) } })}
           />
         </label>
-              {/* HDRI Environment properties calling controls */}
   <h3> HDRI Environment Settings</h3>
   <label>
     Environment Intensity:
@@ -616,7 +581,6 @@ export default function App() {
       }}
     />
   </label>
-        {/* All types of file uploading controls */}
         <h3>Upload Model</h3>
         <label>GLB:</label>
         <input type="file" accept=".glb" onChange={handleGLBUpload} />
@@ -637,6 +601,44 @@ export default function App() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
