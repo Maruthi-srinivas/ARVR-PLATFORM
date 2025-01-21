@@ -83,17 +83,28 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
 
       // Traverse through model and update material properties
 
-      // Remove textures from the model
+      // Add textures from the model
       scene.traverse((child) => {
         if (child.isMesh && child.material) {
            // Check if material is an array
           if (Array.isArray(child.material)) {
             child.material.forEach((mat) => {
-              mat.map = texture; // Remove the texture
+              // Apply the texture
+              if(texture){
+                mat.map=texture;
+              }
               mat.needsUpdate = true; // Trigger material update
             });
           } else {
-            child.material.map = texture; // Apply custom texture if provided
+            if(texture){
+                child.material.map = texture; // Apply custom texture if provided
+            }
+            else{
+              // Ensure the original texture is used if available
+                if (child.material.map) {
+                    child.material.map.needsUpdate = true;
+                }
+            }
             child.material.needsUpdate = true; // Mark material for update
           }
           // Update material properties from input
@@ -120,7 +131,7 @@ function Model({ materialProps, glbModel, fbxModelUrl, texture, startAnimation }
         setMixer(animationMixer);  // Save the mixer instance
       }
     }
-  }, [glbModel, materialProps,texture,gltfData]);
+  }, [glbModel,texture, materialProps,gltfData]);
 
   // Effect to process FBX models when they change
   useEffect(() => {
